@@ -3,7 +3,6 @@ import Hero from "@/components/Hero";
 import Features from "@/components/Features";
 import Timeline from "@/components/Timeline";
 import InteractiveDemo from "@/components/InteractiveDemo";
-import SocialProof from "@/components/SocialProof";
 import CTA from "@/components/CTA";
 import Footer from "@/components/Footer";
 
@@ -12,7 +11,6 @@ export default function Home() {
     <main className="min-h-screen bg-gradient-to-b from-white to-gray-50">
       <Navbar />
       <Hero />
-      <SocialProof />
       <Features />
       <Timeline />
       <InteractiveDemo />
