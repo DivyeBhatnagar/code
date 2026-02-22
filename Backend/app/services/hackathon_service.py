@@ -6,7 +6,7 @@ from datetime import datetime
 
 async def generate_hackathon_plan(session_data: HackathonSessionCreate) -> HackathonPlan:
     """
-    Generate a comprehensive hackathon execution plan
+    Generate a comprehensive hackathon execution plan with enhanced features
     """
     
     # Build team context
@@ -16,7 +16,7 @@ async def generate_hackathon_plan(session_data: HackathonSessionCreate) -> Hacka
         for i, member in enumerate(session_data.team_members, 1):
             team_context += f"{i}. {member.name} - Skills: {member.skill_strengths}, Preferred Role: {member.preferred_role}\n"
     
-    prompt = f"""You are an expert hackathon strategist. Create a comprehensive execution plan for this hackathon project.
+    prompt = f"""You are an expert hackathon strategist and execution manager. Create a comprehensive execution plan for this hackathon project.
 
 HACKATHON DETAILS:
 Name: {session_data.hackathon_name}
@@ -30,62 +30,255 @@ Final Goal: {session_data.final_goal}
 PROBLEM STATEMENT:
 {session_data.problem_statement}
 
-Create a detailed execution plan with:
+CRITICAL FORMATTING RULE:
+Return clean structured text in plain format.
+Do NOT use markdown symbols such as: **, ##, ###, ---, ``` or any decorative formatting.
+Do NOT use asterisks for bold.
+Do NOT use slash-based formatting.
+Output must be clean readable structured plain text with proper spacing.
 
-1. TIMELINE BREAKDOWN
-Break the {session_data.duration_hours} hours into logical time blocks (e.g., 0-4 hours, 4-8 hours, etc.)
-For each block, list specific tasks and who should work on them.
+Create a detailed execution plan with the following sections:
 
-2. TEAM ROLE ASSIGNMENTS
-Assign optimal roles to each team member based on their skills.
-List specific responsibilities for each person.
+EXECUTION PLAN
 
-3. MVP SCOPE
-- Core Features (must-have for demo)
-- Optional Features (if time permits)
-- Stretch Goals (ambitious additions)
+Provide a high-level overview of the project approach and strategy.
 
-4. TECH STACK RECOMMENDATIONS
-Suggest specific technologies for:
-- Frontend
-- Backend  
+
+VISUAL TIMELINE BREAKDOWN
+
+Create a structured hour-by-hour timeline like this format:
+Hour 0-2: Planning and Setup
+    - Define requirements
+    - Set up development environment
+    - Create project structure
+
+Hour 2-6: Backend Development
+    - Build API endpoints
+    - Implement core logic
+    - Set up database
+
+Hour 6-10: Frontend Development
+    - Create UI components
+    - Connect to backend
+    - Implement user flows
+
+Hour 10-12: Testing and Presentation
+    - Test all features
+    - Prepare demo
+    - Create presentation
+
+Make it visually clean using spacing only (no markdown characters).
+
+
+TEAM ROLE ASSIGNMENTS
+
+For each team member, assign:
+- Primary Role
+- Specific Responsibilities
+- Key Deliverables
+- Collaboration Points
+
+
+MVP SCOPE
+
+Core Features (Must-Have):
+List 3-5 essential features needed for a working demo.
+
+Optional Features (If Time Permits):
+List 2-3 features that would enhance the project.
+
+Stretch Goals (Ambitious Additions):
+List 1-2 advanced features if everything goes smoothly.
+
+
+TECH STACK RECOMMENDATIONS
+
+Frontend:
+- Framework/Library
+- Styling Solution
+- Key Libraries
+
+Backend:
+- Framework
 - Database
-- Deployment
-- Key Libraries/Tools
+- Authentication
+- Key Libraries
 
-5. RISK ANALYSIS
-Identify potential risks with:
-- Type (technical/time/team)
-- Severity (high/medium/low)
-- Mitigation strategy
+Deployment:
+- Hosting Platform
+- CI/CD Tools
 
-Format your response as structured sections with clear headings. Be specific and actionable."""
+Development Tools:
+- Version Control
+- Testing Framework
+- API Testing
+
+
+TECHNICAL KICKSTART GUIDE
+
+Backend Setup Steps:
+1. Environment Setup
+   - Install required software
+   - Set up virtual environment or package manager
+
+2. Installing Dependencies
+   - List exact installation commands
+   - Specify versions if critical
+
+3. Creating Main Entry File
+   - File structure
+   - Basic server setup code approach
+
+4. Creating Service Layer
+   - Business logic organization
+   - Data models structure
+
+5. Creating API Endpoints
+   - Route definitions
+   - Request/response handling
+
+6. Testing API Locally
+   - Testing tools to use
+   - Sample test commands
+
+Frontend Setup Steps:
+1. Creating Project
+   - Project initialization command
+   - Folder structure setup
+
+2. Installing Styling Framework
+   - CSS framework installation
+   - Configuration steps
+
+3. Creating Main Components
+   - Component architecture
+   - State management approach
+
+4. Connecting API
+   - API client setup
+   - Environment configuration
+
+5. Handling Loading and Error States
+   - Loading indicators
+   - Error boundaries
+   - User feedback patterns
+
+
+SUGGESTED PROJECT STRUCTURE
+
+Provide a clean text-based folder structure like:
+
+backend/
+    app/
+        main.py
+        routes.py
+        services/
+            logic.py
+        models/
+            database.py
+    tests/
+    requirements.txt
+
+frontend/
+    src/
+        components/
+        pages/
+        services/
+        utils/
+    public/
+    package.json
+
+
+BUILD INITIALIZATION DATA
+
+Provide structured data in plain text format (not JSON syntax) that can be used to auto-generate code:
+
+Build Type: [backend/frontend/fullstack]
+Project Name: [name]
+Core Features:
+    - Feature 1
+    - Feature 2
+    - Feature 3
+Suggested Tech Stack:
+    - Technology 1
+    - Technology 2
+    - Technology 3
+Primary Language: [language]
+Project Type: [api/web/mobile]
+
+
+EXECUTION CONFIDENCE SCORE
+
+Score: [X out of 100]
+
+Confidence Explanation:
+Explain why the score is high or low based on:
+- Team skill alignment with required technologies
+- Hackathon duration vs scope complexity
+- Feature feasibility within timeframe
+- Risk factors
+
+
+RISK ANALYSIS
+
+For each risk, provide:
+Risk: [Description]
+Type: [Technical/Time/Team]
+Severity: [High/Medium/Low]
+Mitigation Strategy: [Specific actions]
+
+
+PLAN OPTIMIZATION SUGGESTIONS
+
+Analyze the plan and provide:
+
+Task Redistribution:
+If workload is imbalanced, suggest how to redistribute tasks.
+
+Timeline Compression:
+If timeline is tight, suggest which tasks can be parallelized or shortened.
+
+Feature Reduction:
+If scope is too large, suggest which features to defer.
+
+Performance Improvements:
+Suggest optimizations for faster development.
+
+
+TWO-MINUTE DEMO SCRIPT
+
+Create a presentation script with:
+
+Opening (15 seconds):
+Strong hook explaining the problem.
+
+Problem Statement (20 seconds):
+Why this problem matters and who it affects.
+
+Solution Explanation (30 seconds):
+How your solution solves the problem uniquely.
+
+Architecture Explanation (20 seconds):
+Brief technical overview of how it works.
+
+Demo Flow (25 seconds):
+Key features to demonstrate in order.
+
+Closing Statement (10 seconds):
+Strong memorable closing line about impact.
+
+No video suggestions. Text only. Professional tone.
+
+
+Remember: Output must be clean, structured, plain text with no markdown symbols or decorative characters. Use spacing and clear section headers only."""
 
     # Generate AI response
     ai_response = await generate_ai_response(prompt)
     
     # Parse the response into structured data
-    # For now, we'll create a structured format from the text response
     session_id = str(uuid.uuid4())
     
-    # Create a basic structure (in production, you'd parse the AI response more intelligently)
-    plan = HackathonPlan(
-        session_id=session_id,
-        hackathon_name=session_data.hackathon_name,
-        timeline=[],
-        team_roles=[],
-        mvp_scope={
-            "core_features": [],
-            "optional_features": [],
-            "stretch_goals": []
-        },
-        tech_stack={},
-        risks=[],
-        created_at=datetime.now().isoformat()
-    )
-    
-    # Store the full AI response as a formatted plan
-    # This will be returned as the complete plan text
+    # Return the enhanced plan
     return {
         "session_id": session_id,
         "hackathon_name": session_data.hackathon_name,

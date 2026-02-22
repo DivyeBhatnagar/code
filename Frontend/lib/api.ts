@@ -280,3 +280,195 @@ export async function downloadProjectZip(
 
   return await response.blob();
 }
+
+// New AI Features
+export interface ExplainCodeRequest {
+  file_path: string;
+  content: string;
+}
+
+export interface ExplainCodeResponse {
+  purpose: string;
+  flow: string;
+  key_components: string[];
+  improvements: string[];
+}
+
+export interface RefactorRequest {
+  scope: string;
+  file_path: string;
+  content: string;
+  project_context?: any;
+}
+
+export interface RefactorResponse {
+  updated_files: Array<{
+    path: string;
+    content: string;
+  }>;
+  explanation: string;
+}
+
+export interface ChatRequest {
+  message: string;
+  project_context?: any;
+  active_file?: string;
+}
+
+export interface ChatResponse {
+  response: string;
+}
+
+export interface ProjectScoreResponse {
+  score: number;
+  breakdown: {
+    tests: number;
+    docker: number;
+    error_handling: number;
+    readme: number;
+    security: number;
+    structure: number;
+    logging: number;
+    env_vars: number;
+  };
+  improvements: string[];
+}
+
+export interface PitchResponse {
+  problem_statement: string;
+  solution_overview: string;
+  tech_stack: string;
+  architecture_summary: string;
+  demo_flow: string;
+  future_scope: string;
+  "2_min_pitch_script": string;
+}
+
+export interface DemoModeResponse {
+  problem_explained: string;
+  solution_explained: string;
+  component_breakdown: string;
+  how_to_demo: string;
+  judge_impression_tips: string;
+  "2_min_script": string;
+}
+
+export async function explainCode(request: ExplainCodeRequest): Promise<ExplainCodeResponse> {
+  const token = await getAuthToken();
+  
+  const response = await fetch(`${API_URL}/ai/explain-code`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify(request),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.detail || 'Failed to explain code');
+  }
+
+  return await response.json();
+}
+
+export async function refactorCode(request: RefactorRequest): Promise<RefactorResponse> {
+  const token = await getAuthToken();
+  
+  const response = await fetch(`${API_URL}/ai/refactor`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify(request),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.detail || 'Failed to refactor code');
+  }
+
+  return await response.json();
+}
+
+export async function chatWithAI(request: ChatRequest): Promise<ChatResponse> {
+  const token = await getAuthToken();
+  
+  const response = await fetch(`${API_URL}/ai/chat`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify(request),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.detail || 'Failed to chat with AI');
+  }
+
+  return await response.json();
+}
+
+export async function getProjectScore(projectStructure: any): Promise<ProjectScoreResponse> {
+  const token = await getAuthToken();
+  
+  const response = await fetch(`${API_URL}/ai/project-score`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({ project_structure: projectStructure }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.detail || 'Failed to get project score');
+  }
+
+  return await response.json();
+}
+
+export async function generatePitch(projectStructure: any): Promise<PitchResponse> {
+  const token = await getAuthToken();
+  
+  const response = await fetch(`${API_URL}/ai/generate-pitch-from-code`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({ project_structure: projectStructure }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.detail || 'Failed to generate pitch');
+  }
+
+  return await response.json();
+}
+
+export async function getDemoMode(projectStructure: any): Promise<DemoModeResponse> {
+  const token = await getAuthToken();
+  
+  const response = await fetch(`${API_URL}/ai/demo-mode`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({ project_structure: projectStructure }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.detail || 'Failed to get demo mode');
+  }
+
+  return await response.json();
+}

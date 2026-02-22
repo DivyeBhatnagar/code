@@ -65,6 +65,7 @@ export default function MonacoEditor({ content, language = 'plaintext', readOnly
         editorInstance.dispose();
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

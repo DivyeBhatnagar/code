@@ -1,13 +1,12 @@
-import { Zap } from "lucide-react";
+import Image from "next/image";
 
 export default function Footer() {
   return (
     <footer className="py-12 px-6 lg:px-8 border-t">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
-          <div className="flex items-center gap-2">
-            <Zap className="w-5 h-5 text-accent" />
-            <span className="font-semibold text-lg tracking-tight">CodePilot AI</span>
+          <div className="flex items-center">
+            <Image src="/logo.png" alt="CodePilot AI" width={170} height={170} className="object-contain" />
           </div>
 
           <div className="flex items-center gap-6">

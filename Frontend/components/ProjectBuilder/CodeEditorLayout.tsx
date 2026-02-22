@@ -5,6 +5,10 @@ import FileTree from './FileTree';
 import MonacoEditor from './MonacoEditor';
 import ProjectToolbar from './ProjectToolbar';
 import ProjectTabs from './ProjectTabs';
+import ExplainPanel from './ExplainPanel';
+import ChatSidebar from './ChatSidebar';
+import RefactorResultModal from './RefactorResultModal';
+import { explainCode, refactorCode, ExplainCodeResponse } from '@/lib/api';
 import { Loader2 } from 'lucide-react';
 
 interface ProjectData {
@@ -24,6 +28,7 @@ interface CodeEditorLayoutProps {
   projectData: ProjectData;
   onDownload: () => void;
   onRegenerate: () => void;
+  onPitch: () => void;
   isLoading?: boolean;
 }
 
@@ -31,11 +36,23 @@ export default function CodeEditorLayout({
   projectData, 
   onDownload, 
   onRegenerate,
+  onPitch,
   isLoading = false 
 }: CodeEditorLayoutProps) {
   const [activeFile, setActiveFile] = useState<string | null>(null);
   const [currentFileContent, setCurrentFileContent] = useState('');
   const [currentFileLanguage, setCurrentFileLanguage] = useState('plaintext');
+  
+  // Panel states
+  const [explainPanelOpen, setExplainPanelOpen] = useState(false);
+  const [chatSidebarOpen, setChatSidebarOpen] = useState(false);
+  const [refactorModalOpen, setRefactorModalOpen] = useState(false);
+  
+  // Data states
+  const [explanation, setExplanation] = useState<ExplainCodeResponse | null>(null);
+  const [isExplaining, setIsExplaining] = useState(false);
+  const [isRefactoring, setIsRefactoring] = useState(false);
+  const [refactorResult, setRefactorResult] = useState<{ explanation: string; fileName: string } | null>(null);
 
   // Auto-select first file on load
   useEffect(() => {
@@ -45,7 +62,7 @@ export default function CodeEditorLayout({
       setCurrentFileContent(firstFile.content);
       setCurrentFileLanguage(getLanguageFromPath(firstFile.path, firstFile.language));
     }
-  }, [projectData.files]);
+  }, [projectData.files, activeFile]);
 
   const handleFileSelect = (path: string) => {
     const file = projectData.files.find(f => f.path === path);
@@ -53,6 +70,62 @@ export default function CodeEditorLayout({
       setActiveFile(path);
       setCurrentFileContent(file.content);
       setCurrentFileLanguage(getLanguageFromPath(file.path, file.language));
+    }
+  };
+
+  const handleExplain = async () => {
+    if (!activeFile) return;
+    
+    setIsExplaining(true);
+    setExplainPanelOpen(true);
+    
+    try {
+      const result = await explainCode({
+        file_path: activeFile,
+        content: currentFileContent
+      });
+      setExplanation(result);
+    } catch (error) {
+      console.error('Explain failed:', error);
+    } finally {
+      setIsExplaining(false);
+    }
+  };
+
+  const handleRefactor = async () => {
+    if (!activeFile) return;
+    
+    setIsRefactoring(true);
+    
+    try {
+      const result = await refactorCode({
+        scope: 'file',
+        file_path: activeFile,
+        content: currentFileContent,
+        project_context: projectData
+      });
+      
+      if (result.updated_files.length > 0) {
+        const updatedFile = result.updated_files[0];
+        setCurrentFileContent(updatedFile.content);
+        
+        // Update in projectData
+        const fileIndex = projectData.files.findIndex(f => f.path === activeFile);
+        if (fileIndex !== -1) {
+          projectData.files[fileIndex].content = updatedFile.content;
+        }
+        
+        // Show refactor result modal
+        setRefactorResult({
+          explanation: result.explanation,
+          fileName: activeFile
+        });
+        setRefactorModalOpen(true);
+      }
+    } catch (error: any) {
+      alert(`Refactor failed: ${error.message}`);
+    } finally {
+      setIsRefactoring(false);
     }
   };
 
@@ -91,9 +164,14 @@ export default function CodeEditorLayout({
       {/* Toolbar */}
       <ProjectToolbar
         projectName={projectData.project_name}
+        projectData={projectData}
         onDownload={onDownload}
         onRegenerate={onRegenerate}
-        isLoading={isLoading}
+        onExplain={handleExplain}
+        onRefactor={handleRefactor}
+        onChat={() => setChatSidebarOpen(true)}
+        onPitch={onPitch}
+        isLoading={isLoading || isRefactoring}
       />
 
       {/* Main Content */}
@@ -114,8 +192,14 @@ export default function CodeEditorLayout({
         <div className="flex-1 flex flex-col overflow-hidden">
           {activeFile ? (
             <>
-              <div className="px-4 py-2 bg-gray-800 text-gray-300 text-sm font-mono border-b border-gray-700">
-                {activeFile}
+              <div className="px-4 py-2 bg-gray-800 text-gray-300 text-sm font-mono border-b border-gray-700 flex items-center justify-between">
+                <span>{activeFile}</span>
+                {isRefactoring && (
+                  <div className="flex items-center gap-2 text-xs text-yellow-400">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    Refactoring...
+                  </div>
+                )}
               </div>
               <div className="flex-1 overflow-hidden">
                 <MonacoEditor
@@ -141,6 +225,28 @@ export default function CodeEditorLayout({
         dependencies={projectData.dependencies}
         setupInstructions={projectData.setup_instructions}
         runCommands={projectData.run_commands}
+      />
+
+      {/* Side Panels */}
+      <ExplainPanel
+        isOpen={explainPanelOpen}
+        onClose={() => setExplainPanelOpen(false)}
+        explanation={explanation}
+        isLoading={isExplaining}
+      />
+
+      <ChatSidebar
+        isOpen={chatSidebarOpen}
+        onClose={() => setChatSidebarOpen(false)}
+        projectContext={projectData}
+        activeFile={activeFile}
+      />
+
+      <RefactorResultModal
+        isOpen={refactorModalOpen}
+        onClose={() => setRefactorModalOpen(false)}
+        explanation={refactorResult?.explanation || ''}
+        fileName={refactorResult?.fileName || ''}
       />
     </div>
   );

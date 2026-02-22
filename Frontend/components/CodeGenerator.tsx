@@ -3,9 +3,10 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Code, Sparkles, Loader2 } from 'lucide-react';
-import { buildProject, downloadProjectZip, ProjectBuildRequest, ProjectResponse } from '@/lib/api';
+import { buildProject, downloadProjectZip, generatePitch, ProjectBuildRequest, ProjectResponse, PitchResponse } from '@/lib/api';
 import CodeEditorLayout from './ProjectBuilder/CodeEditorLayout';
 import LoadingOverlay from './ProjectBuilder/LoadingOverlay';
+import PitchModal from './ProjectBuilder/PitchModal';
 
 export default function CodeGenerator() {
   const [prompt, setPrompt] = useState('');
@@ -15,6 +16,11 @@ export default function CodeGenerator() {
   const [projectData, setProjectData] = useState<ProjectResponse | null>(null);
   const [error, setError] = useState('');
   const [showEditor, setShowEditor] = useState(false);
+  
+  // Pitch state
+  const [pitchModalOpen, setPitchModalOpen] = useState(false);
+  const [pitchData, setPitchData] = useState<PitchResponse | null>(null);
+  const [loadingPitch, setLoadingPitch] = useState(false);
 
   const languages = [
     'python', 'javascript', 'typescript', 'react', 'nextjs', 
@@ -84,13 +90,41 @@ export default function CodeGenerator() {
     setProjectData(null);
   };
 
+  const handlePitch = async () => {
+    if (!projectData) return;
+    
+    setLoadingPitch(true);
+    setPitchModalOpen(true);
+    
+    try {
+      const result = await generatePitch(projectData);
+      setPitchData(result);
+    } catch (err: any) {
+      console.error('Pitch generation error:', err);
+      setError(err.message || 'Failed to generate pitch');
+      setPitchModalOpen(false);
+    } finally {
+      setLoadingPitch(false);
+    }
+  };
+
   if (showEditor && projectData) {
     return (
-      <CodeEditorLayout
-        projectData={projectData}
-        onDownload={handleDownload}
-        onRegenerate={handleBackToForm}
-      />
+      <>
+        <CodeEditorLayout
+          projectData={projectData}
+          onDownload={handleDownload}
+          onRegenerate={handleBackToForm}
+          onPitch={handlePitch}
+        />
+        
+        <PitchModal
+          isOpen={pitchModalOpen}
+          onClose={() => setPitchModalOpen(false)}
+          pitchData={pitchData}
+          isLoading={loadingPitch}
+        />
+      </>
     );
   }
 

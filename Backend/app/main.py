@@ -2,7 +2,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
-from app.routers import ai_router, auth_router, hackathon_router
+from app.routers import (
+    ai_router, auth_router, hackathon_router,
+    ai_explain, ai_refactor, ai_pitch, ai_chat, ai_score, ai_demo
+)
 from app.config import settings
 from app.middleware.error_handler import (
     http_exception_handler,
@@ -62,6 +65,12 @@ async def shutdown_event():
 
 # Register routers
 app.include_router(ai_router.router, prefix="/ai", tags=["AI"])
+app.include_router(ai_explain.router, prefix="/ai", tags=["AI - Explain"])
+app.include_router(ai_refactor.router, prefix="/ai", tags=["AI - Refactor"])
+app.include_router(ai_pitch.router, prefix="/ai", tags=["AI - Pitch"])
+app.include_router(ai_chat.router, prefix="/ai", tags=["AI - Chat"])
+app.include_router(ai_score.router, prefix="/ai", tags=["AI - Score"])
+app.include_router(ai_demo.router, prefix="/ai", tags=["AI - Demo"])
 app.include_router(auth_router.router, prefix="/auth", tags=["Auth"])
 app.include_router(hackathon_router.router, prefix="/hackathon", tags=["Hackathon"])
 

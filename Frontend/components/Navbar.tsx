@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -25,9 +25,8 @@ export default function Navbar() {
     >
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <Link href="/" className="flex items-center gap-2 cursor-pointer">
-            <Zap className="w-5 h-5 text-accent" />
-            <span className="font-semibold text-lg tracking-tight">CodePilot AI</span>
+          <Link href="/" className="flex items-center cursor-pointer">
+            <Image src="/logo.png" alt="CodePilot AI" width={170} height={170} className="object-contain" />
           </Link>
 
           <div className="hidden md:flex items-center gap-8">

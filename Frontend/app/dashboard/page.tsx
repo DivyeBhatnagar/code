@@ -5,12 +5,16 @@ import { useRouter } from 'next/navigation';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { createHackathonSession, HackathonSessionCreate } from '@/lib/api';
-import { LogOut, Loader2, Zap, Rocket, Code, ArrowLeft, FileText, Download } from 'lucide-react';
+import { saveHackathonPlan, logUserActivity } from '@/lib/firebaseService';
+import { LogOut, Loader2, Rocket, Code, ArrowLeft, FileText, Download } from 'lucide-react';
 import { motion } from 'framer-motion';
 import HackathonSetupModal from '@/components/HackathonSetupModal';
 import CodeGenerator from '@/components/CodeGenerator';
+import PlanView from '@/components/HackathonPlan/PlanView';
+import SavedProjectsPanel from '@/components/SavedProjectsPanel';
+import Image from 'next/image';
 
-type ViewMode = 'home' | 'plan' | 'code';
+type ViewMode = 'home' | 'plan' | 'code' | 'saved';
 
 export default function DashboardPage() {
   const [user, setUser] = useState<any>(null);
@@ -51,6 +55,22 @@ export default function DashboardPage() {
     try {
       const response = await createHackathonSession(sessionData);
       setCurrentPlan(response.data);
+      
+      // Save to Firebase
+      try {
+        await saveHackathonPlan(response.data);
+        await logUserActivity({
+          action: 'hackathon_plan_created',
+          details: {
+            hackathon_name: response.data.hackathon_name,
+            session_id: response.data.session_id
+          }
+        });
+      } catch (firebaseError) {
+        console.error('Firebase save error:', firebaseError);
+        // Continue even if Firebase save fails
+      }
+      
       setShowSetupModal(false);
       setViewMode('plan');
     } catch (err: any) {
@@ -91,9 +111,8 @@ export default function DashboardPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Zap className="w-5 h-5 text-accent" />
-                <h1 className="text-lg font-semibold text-gray-900">CodePilot AI</h1>
+              <div className="flex items-center">
+                <Image src="/logo.png" alt="CodePilot AI" width={170} height={170} className="object-contain" />
               </div>
               {viewMode !== 'home' && (
                 <button
@@ -139,7 +158,7 @@ export default function DashboardPage() {
                 animate={{ scale: 1 }}
                 className="inline-flex items-center gap-2 px-4 py-2 bg-accent/10 text-accent rounded-full text-sm font-medium mb-6"
               >
-                <Zap className="w-4 h-4" />
+                <Rocket className="w-4 h-4" />
                 Your AI Hackathon Teammate
               </motion.div>
               <h2 className="text-5xl font-bold text-gray-900 mb-4">
@@ -172,7 +191,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Secondary Actions */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 onClick={() => setViewMode('code')}
@@ -187,6 +206,26 @@ export default function DashboardPage() {
                 </p>
                 <div className="mt-4 flex items-center text-green-600 group-hover:translate-x-1 transition-transform">
                   <span className="text-sm font-medium">Open Generator</span>
+                  <svg className="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </motion.button>
+
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                onClick={() => setViewMode('saved')}
+                className="group p-8 bg-white border-2 border-gray-200 rounded-2xl hover:border-blue-600 hover:shadow-xl transition-all text-left"
+              >
+                <div className="inline-flex p-3 bg-blue-600 rounded-xl mb-4">
+                  <FileText className="w-6 h-6 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">Saved Projects</h3>
+                <p className="text-gray-600">
+                  View and manage your saved hackathon plans and generated projects
+                </p>
+                <div className="mt-4 flex items-center text-blue-600 group-hover:translate-x-1 transition-transform">
+                  <span className="text-sm font-medium">View Saved</span>
                   <svg className="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
@@ -219,35 +258,10 @@ export default function DashboardPage() {
         )}
 
         {viewMode === 'plan' && currentPlan && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="space-y-6"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-3xl font-bold text-gray-900">{currentPlan.hackathon_name}</h2>
-                <p className="text-gray-600 mt-1">
-                  Generated {new Date(currentPlan.created_at).toLocaleString()}
-                </p>
-              </div>
-              <button
-                onClick={handleExportPlan}
-                className="flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors"
-              >
-                <Download className="w-4 h-4" />
-                Export Plan
-              </button>
-            </div>
-
-            <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-lg">
-              <div className="prose prose-gray max-w-none">
-                <div className="text-gray-800 whitespace-pre-wrap leading-relaxed">
-                  {currentPlan.full_plan}
-                </div>
-              </div>
-            </div>
-          </motion.div>
+          <PlanView 
+            planData={currentPlan}
+            onBack={() => setViewMode('home')}
+          />
         )}
 
         {viewMode === 'code' && (
@@ -256,6 +270,24 @@ export default function DashboardPage() {
             animate={{ opacity: 1 }}
           >
             <CodeGenerator />
+          </motion.div>
+        )}
+
+        {viewMode === 'saved' && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            <SavedProjectsPanel
+              onSelectPlan={(plan) => {
+                setCurrentPlan(plan);
+                setViewMode('plan');
+              }}
+              onSelectProject={(project) => {
+                // Handle opening saved project
+                alert('Opening saved project: ' + project.project_name);
+              }}
+            />
           </motion.div>
         )}
       </div>

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, updateProfile, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function RegisterPage() {
   const [name, setName] = useState('');
@@ -77,7 +78,8 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-white to-gray-50 p-4">
       <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-2xl border border-gray-200 shadow-xl">
-        <div>
+        <div className="flex flex-col items-center">
+          <Image src="/logo.png" alt="CodePilot AI" width={170} height={170} className="object-contain mb-4" />
           <h2 className="text-center text-4xl font-bold text-gray-900">
             Create Account
           </h2>
