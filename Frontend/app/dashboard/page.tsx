@@ -8,6 +8,7 @@ import { createHackathonSession, HackathonSessionCreate } from '@/lib/api';
 import { saveHackathonPlan, logUserActivity } from '@/lib/firebaseService';
 import { LogOut, Loader2, Rocket, Code, ArrowLeft, FileText, Download } from 'lucide-react';
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 import HackathonSetupModal from '@/components/HackathonSetupModal';
 import CodeGenerator from '@/components/CodeGenerator';
 import PlanView from '@/components/HackathonPlan/PlanView';
@@ -121,9 +122,9 @@ export default function DashboardPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-4">
-              <div className="flex items-center">
+              <Link href="/" className="flex items-center cursor-pointer">
                 <Image src="/logo.png" alt="CodePilot AI" width={170} height={170} className="object-contain" />
-              </div>
+              </Link>
               {viewMode !== 'home' && (
                 <button
                   onClick={() => setViewMode('home')}
