@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Code, Sparkles, Loader2 } from 'lucide-react';
 import { buildProject, downloadProjectZip, generatePitch, ProjectBuildRequest, ProjectResponse, PitchResponse } from '@/lib/api';
+import { saveGeneratedProject, logUserActivity } from '@/lib/firebaseService';
 import CodeEditorLayout from './ProjectBuilder/CodeEditorLayout';
 import LoadingOverlay from './ProjectBuilder/LoadingOverlay';
 import PitchModal from './ProjectBuilder/PitchModal';
@@ -53,6 +54,27 @@ export default function CodeGenerator() {
       const response = await buildProject(request);
       setProjectData(response);
       setShowEditor(true);
+      
+      // Save to Firebase
+      try {
+        const projectId = await saveGeneratedProject({
+          ...response,
+          session_id: `code_gen_${Date.now()}`
+        });
+        // Add projectId to response
+        setProjectData({ ...response, projectId });
+        await logUserActivity({
+          action: 'code_generator_project_built',
+          details: {
+            project_name: response.project_name,
+            language: language,
+            project_type: projectType
+          }
+        });
+      } catch (firebaseError) {
+        console.error('Firebase save error:', firebaseError);
+        // Continue even if Firebase save fails
+      }
     } catch (err: any) {
       console.error('Project build error:', err);
       setError(err.message || 'Failed to build project');
@@ -113,6 +135,7 @@ export default function CodeGenerator() {
       <>
         <CodeEditorLayout
           projectData={projectData}
+          projectId={(projectData as any).projectId}
           onDownload={handleDownload}
           onRegenerate={handleBackToForm}
           onPitch={handlePitch}

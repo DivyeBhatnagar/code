@@ -32,10 +32,13 @@ export default function DashboardPage() {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
-      } else {
+        setLoading(false);
+      } else if (!loading) {
+        // Only redirect if we've finished initial load and there's no user
         router.push('/login');
+      } else {
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => unsubscribe();
