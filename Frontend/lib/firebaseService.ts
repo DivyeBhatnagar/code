@@ -296,3 +296,134 @@ export async function getUserPreferences() {
 
   return userDoc.data().preferences || null;
 }
+
+// Get user statistics
+export async function getUserStatistics() {
+  const user = auth.currentUser;
+  if (!user) throw new Error('User not authenticated');
+
+  // Get all projects
+  const projectsRef = collection(db, 'users', user.uid, 'generated_projects');
+  const projectsQuery = query(projectsRef, where('status', '!=', 'deleted'));
+  const projectsSnapshot = await getDocs(projectsQuery);
+  const totalProjects = projectsSnapshot.size;
+
+  // Get all plans
+  const plansRef = collection(db, 'users', user.uid, 'hackathon_plans');
+  const plansQuery = query(plansRef, where('status', '==', 'active'));
+  const plansSnapshot = await getDocs(plansQuery);
+  const activePlans = plansSnapshot.size;
+
+  // Get total AI generations (projects + plans)
+  const aiGenerations = totalProjects + plansSnapshot.size;
+
+  // Get last activity
+  const activityRef = collection(db, 'users', user.uid, 'activity_logs');
+  const activityQuery = query(activityRef);
+  const activitySnapshot = await getDocs(activityQuery);
+  
+  let lastActivity = 'Never';
+  if (!activitySnapshot.empty) {
+    const activities = activitySnapshot.docs.map(doc => doc.data());
+    const sortedActivities = activities.sort((a, b) => {
+      const timeA = a.timestamp?.toDate?.()?.getTime() || 0;
+      const timeB = b.timestamp?.toDate?.()?.getTime() || 0;
+      return timeB - timeA;
+    });
+    
+    if (sortedActivities[0]?.timestamp) {
+      const lastTime = sortedActivities[0].timestamp.toDate();
+      const now = new Date();
+      const diffMs = now.getTime() - lastTime.getTime();
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMs / 3600000);
+      const diffDays = Math.floor(diffMs / 86400000);
+      
+      if (diffMins < 1) {
+        lastActivity = 'Just now';
+      } else if (diffMins < 60) {
+        lastActivity = `${diffMins}m ago`;
+      } else if (diffHours < 24) {
+        lastActivity = `${diffHours}h ago`;
+      } else if (diffDays < 7) {
+        lastActivity = `${diffDays}d ago`;
+      } else {
+        lastActivity = lastTime.toLocaleDateString();
+      }
+    }
+  }
+
+  return {
+    totalProjects,
+    activePlans,
+    aiGenerations,
+    lastActivity
+  };
+}
+
+// Get recent activity logs
+export async function getRecentActivity(limit: number = 10) {
+  const user = auth.currentUser;
+  if (!user) throw new Error('User not authenticated');
+
+  const activityRef = collection(db, 'users', user.uid, 'activity_logs');
+  const activitySnapshot = await getDocs(activityRef);
+
+  const activities: any[] = [];
+  activitySnapshot.forEach((doc) => {
+    activities.push({ id: doc.id, ...doc.data() });
+  });
+
+  // Sort by timestamp descending
+  const sortedActivities = activities.sort((a, b) => {
+    const timeA = a.timestamp?.toDate?.()?.getTime() || 0;
+    const timeB = b.timestamp?.toDate?.()?.getTime() || 0;
+    return timeB - timeA;
+  });
+
+  // Take only the most recent activities
+  return sortedActivities.slice(0, limit).map(activity => {
+    const timestamp = activity.timestamp?.toDate();
+    let timeAgo = 'Unknown';
+    
+    if (timestamp) {
+      const now = new Date();
+      const diffMs = now.getTime() - timestamp.getTime();
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMs / 3600000);
+      const diffDays = Math.floor(diffMs / 86400000);
+      
+      if (diffMins < 1) {
+        timeAgo = 'Just now';
+      } else if (diffMins < 60) {
+        timeAgo = `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+      } else if (diffHours < 24) {
+        timeAgo = `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+      } else if (diffDays === 1) {
+        timeAgo = 'Yesterday';
+      } else if (diffDays < 7) {
+        timeAgo = `${diffDays} days ago`;
+      } else {
+        timeAgo = timestamp.toLocaleDateString();
+      }
+    }
+
+    // Format action description
+    let description = activity.action;
+    if (activity.action === 'hackathon_plan_created') {
+      description = `Created hackathon plan: ${activity.details?.hackathon_name || 'Untitled'}`;
+    } else if (activity.action === 'project_generated') {
+      description = `Generated project: ${activity.details?.project_name || 'Untitled'}`;
+    } else if (activity.action === 'project_deleted') {
+      description = 'Deleted a project';
+    } else if (activity.action === 'hackathon_plan_deleted') {
+      description = 'Deleted a hackathon plan';
+    }
+
+    return {
+      ...activity,
+      description,
+      timeAgo
+    };
+  });
+}

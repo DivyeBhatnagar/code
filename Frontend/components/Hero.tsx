@@ -103,7 +103,15 @@ export default function Hero() {
               Launch App
             </button>
           </Link>
-          <button className="w-full sm:w-auto px-8 py-4 border border-gray-300 text-primary font-medium rounded-full hover:border-gray-400 hover:bg-gray-50 transition-all">
+          <button 
+            onClick={() => {
+              const featuresSection = document.getElementById('features');
+              if (featuresSection) {
+                featuresSection.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}
+            className="w-full sm:w-auto px-8 py-4 border border-gray-300 text-primary font-medium rounded-full hover:border-gray-400 hover:bg-gray-50 transition-all"
+          >
             Learn More
           </button>
         </motion.div>

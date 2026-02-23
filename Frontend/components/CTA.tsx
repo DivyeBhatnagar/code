@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Link from "next/link";
 
 export default function CTA() {
   return (
@@ -41,16 +42,18 @@ export default function CTA() {
                 Code smarter. Build faster. Ship confidently.
               </motion.p>
 
-              <motion.button
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                whileHover={{ scale: 1.05 }}
-                className="px-10 py-4 bg-white text-blue-600 font-semibold rounded-full hover:shadow-2xl transition-all"
-              >
-                Launch CodePilot AI
-              </motion.button>
+              <Link href="/register">
+                <motion.button
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: 0.2 }}
+                  whileHover={{ scale: 1.05 }}
+                  className="px-10 py-4 bg-white text-blue-600 font-semibold rounded-full hover:shadow-2xl transition-all"
+                >
+                  Launch CodePilot AI
+                </motion.button>
+              </Link>
             </div>
           </div>
         </motion.div>

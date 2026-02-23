@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { createHackathonSession, HackathonSessionCreate } from '@/lib/api';
-import { saveHackathonPlan, logUserActivity } from '@/lib/firebaseService';
+import { saveHackathonPlan, logUserActivity, getUserStatistics, getRecentActivity } from '@/lib/firebaseService';
 import { LogOut, Loader2, Rocket, Code, ArrowLeft, FileText, Sparkles, Activity, Clock, FolderOpen, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
@@ -18,6 +18,20 @@ import Image from 'next/image';
 
 type ViewMode = 'home' | 'plan' | 'code' | 'saved' | 'project';
 
+interface UserStats {
+  totalProjects: number;
+  activePlans: number;
+  aiGenerations: number;
+  lastActivity: string;
+}
+
+interface RecentActivityItem {
+  id: string;
+  description: string;
+  timeAgo: string;
+  action: string;
+}
+
 export default function DashboardPage() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -27,13 +41,35 @@ export default function DashboardPage() {
   const [currentPlan, setCurrentPlan] = useState<any>(null);
   const [currentProject, setCurrentProject] = useState<any>(null);
   const [error, setError] = useState('');
+  const [userStats, setUserStats] = useState<UserStats>({
+    totalProjects: 0,
+    activePlans: 0,
+    aiGenerations: 0,
+    lastActivity: 'Never'
+  });
+  const [recentActivity, setRecentActivity] = useState<RecentActivityItem[]>([]);
+  const [loadingStats, setLoadingStats] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
         setLoading(false);
+        
+        // Load user statistics
+        try {
+          setLoadingStats(true);
+          const stats = await getUserStatistics();
+          setUserStats(stats);
+          
+          const activities = await getRecentActivity(5);
+          setRecentActivity(activities);
+        } catch (error) {
+          console.error('Failed to load user stats:', error);
+        } finally {
+          setLoadingStats(false);
+        }
       } else if (!loading) {
         router.push('/login');
       } else {
@@ -216,7 +252,9 @@ export default function DashboardPage() {
                     <FileText className="w-5 h-5 text-blue-600" />
                   </div>
                 </div>
-                <div className="text-3xl font-bold text-gray-900 mb-1">12</div>
+                <div className="text-3xl font-bold text-gray-900 mb-1">
+                  {loadingStats ? <Loader2 className="w-6 h-6 animate-spin" /> : userStats.totalProjects}
+                </div>
                 <div className="text-sm text-gray-600">Total Projects</div>
               </div>
 
@@ -226,7 +264,9 @@ export default function DashboardPage() {
                     <Activity className="w-5 h-5 text-green-600" />
                   </div>
                 </div>
-                <div className="text-3xl font-bold text-gray-900 mb-1">3</div>
+                <div className="text-3xl font-bold text-gray-900 mb-1">
+                  {loadingStats ? <Loader2 className="w-6 h-6 animate-spin" /> : userStats.activePlans}
+                </div>
                 <div className="text-sm text-gray-600">Active Plans</div>
               </div>
 
@@ -236,7 +276,9 @@ export default function DashboardPage() {
                     <Zap className="w-5 h-5 text-purple-600" />
                   </div>
                 </div>
-                <div className="text-3xl font-bold text-gray-900 mb-1">47</div>
+                <div className="text-3xl font-bold text-gray-900 mb-1">
+                  {loadingStats ? <Loader2 className="w-6 h-6 animate-spin" /> : userStats.aiGenerations}
+                </div>
                 <div className="text-sm text-gray-600">AI Generations</div>
               </div>
 
@@ -246,7 +288,9 @@ export default function DashboardPage() {
                     <Clock className="w-5 h-5 text-orange-600" />
                   </div>
                 </div>
-                <div className="text-3xl font-bold text-gray-900 mb-1">2h</div>
+                <div className="text-3xl font-bold text-gray-900 mb-1">
+                  {loadingStats ? <Loader2 className="w-6 h-6 animate-spin" /> : userStats.lastActivity}
+                </div>
                 <div className="text-sm text-gray-600">Last Activity</div>
               </div>
             </motion.div>
@@ -323,35 +367,39 @@ export default function DashboardPage() {
               className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm"
             >
               <h3 className="text-xl font-bold text-gray-900 mb-6">Recent Activity</h3>
-              <div className="space-y-4">
-                <div className="flex items-start gap-4">
-                  <div className="relative">
-                    <div className="w-2 h-2 bg-blue-600 rounded-full mt-2"></div>
-                    <div className="absolute top-4 left-1 w-px h-12 bg-gray-200"></div>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-gray-900 font-medium">Generated Maths Chatbot Project</p>
-                    <p className="text-sm text-gray-500">2 hours ago</p>
-                  </div>
+              {loadingStats ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
                 </div>
-                <div className="flex items-start gap-4">
-                  <div className="relative">
-                    <div className="w-2 h-2 bg-green-600 rounded-full mt-2"></div>
-                    <div className="absolute top-4 left-1 w-px h-12 bg-gray-200"></div>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-gray-900 font-medium">Edited Hackathon Plan</p>
-                    <p className="text-sm text-gray-500">Yesterday</p>
-                  </div>
+              ) : recentActivity.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <Activity className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p>No recent activity</p>
+                  <p className="text-sm mt-1">Start creating projects to see your activity here</p>
                 </div>
-                <div className="flex items-start gap-4">
-                  <div className="w-2 h-2 bg-purple-600 rounded-full mt-2"></div>
-                  <div className="flex-1">
-                    <p className="text-gray-900 font-medium">Created new workspace</p>
-                    <p className="text-sm text-gray-500">3 days ago</p>
-                  </div>
+              ) : (
+                <div className="space-y-4">
+                  {recentActivity.map((activity, index) => (
+                    <div key={activity.id} className="flex items-start gap-4">
+                      <div className="relative">
+                        <div className={`w-2 h-2 rounded-full mt-2 ${
+                          activity.action.includes('created') ? 'bg-blue-600' :
+                          activity.action.includes('generated') ? 'bg-green-600' :
+                          activity.action.includes('deleted') ? 'bg-red-600' :
+                          'bg-purple-600'
+                        }`}></div>
+                        {index < recentActivity.length - 1 && (
+                          <div className="absolute top-4 left-1 w-px h-12 bg-gray-200"></div>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-gray-900 font-medium">{activity.description}</p>
+                        <p className="text-sm text-gray-500">{activity.timeAgo}</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </div>
+              )}
             </motion.div>
           </motion.div>
         )}
