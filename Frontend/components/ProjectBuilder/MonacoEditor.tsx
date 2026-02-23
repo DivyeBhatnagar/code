@@ -8,108 +8,94 @@ interface MonacoEditorProps {
   language?: string;
   readOnly?: boolean;
   onChange?: (value: string) => void;
+  onCursorChange?: (line: number, column: number) => void;
 }
 
-export default function MonacoEditor({ content, language = 'plaintext', readOnly = true, onChange }: MonacoEditorProps) {
-  const editorRef = useRef<HTMLDivElement>(null);
+export default function MonacoEditor({ content, language = 'plaintext', readOnly = true, onChange, onCursorChange }: MonacoEditorProps) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [copied, setCopied] = useState(false);
-  const [editor, setEditor] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [localContent, setLocalContent] = useState(content);
 
   useEffect(() => {
-    let mounted = true;
-    let editorInstance: any = null;
+    setLocalContent(content);
+  }, [content]);
 
-    const initMonaco = async () => {
-      if (!editorRef.current) return;
-
-      try {
-        // Dynamic import for Monaco Editor
-        const monaco = await import('monaco-editor');
-        
-        if (!mounted || !editorRef.current) return;
-
-        // Create editor instance
-        editorInstance = monaco.editor.create(editorRef.current, {
-          value: content,
-          language: language,
-          theme: 'vs-dark',
-          readOnly: readOnly,
-          minimap: { enabled: false },
-          fontSize: 14,
-          lineNumbers: 'on',
-          scrollBeyondLastLine: false,
-          automaticLayout: true,
-          wordWrap: 'on',
-        });
-
-        if (onChange) {
-          editorInstance.onDidChangeModelContent(() => {
-            onChange(editorInstance.getValue());
-          });
-        }
-
-        setEditor(editorInstance);
-        setIsLoading(false);
-      } catch (error) {
-        console.error('Failed to load Monaco Editor:', error);
-        setIsLoading(false);
-      }
-    };
-
-    initMonaco();
-
-    return () => {
-      mounted = false;
-      if (editorInstance) {
-        editorInstance.dispose();
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    if (editor && content !== editor.getValue()) {
-      editor.setValue(content);
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newValue = e.target.value;
+    setLocalContent(newValue);
+    if (onChange) {
+      onChange(newValue);
     }
-  }, [content, editor]);
-
-  useEffect(() => {
-    if (editor && language) {
-      const model = editor.getModel();
-      if (model) {
-        import('monaco-editor').then(monaco => {
-          monaco.editor.setModelLanguage(model, language);
-        });
-      }
+    
+    // Calculate cursor position
+    if (onCursorChange && textareaRef.current) {
+      const cursorPos = textareaRef.current.selectionStart;
+      const textBeforeCursor = newValue.substring(0, cursorPos);
+      const lines = textBeforeCursor.split('\n');
+      const line = lines.length;
+      const column = lines[lines.length - 1].length + 1;
+      onCursorChange(line, column);
     }
-  }, [language, editor]);
+  };
+
+  const handleCursorMove = () => {
+    if (onCursorChange && textareaRef.current) {
+      const cursorPos = textareaRef.current.selectionStart;
+      const textBeforeCursor = localContent.substring(0, cursorPos);
+      const lines = textBeforeCursor.split('\n');
+      const line = lines.length;
+      const column = lines[lines.length - 1].length + 1;
+      onCursorChange(line, column);
+    }
+  };
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(content);
+    navigator.clipboard.writeText(localContent);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
+  // Add line numbers
+  const lines = localContent.split('\n');
+  const lineNumbers = lines.map((_, i) => i + 1).join('\n');
+
   return (
-    <div className="relative h-full bg-gray-900">
+    <div className="relative h-full bg-black flex overflow-hidden">
+      {/* Line numbers */}
+      <div className="bg-[#0D0D0D] text-[#6B7280] text-right py-4 px-3 select-none font-mono text-sm leading-6 overflow-hidden border-r border-[#1F1F1F]">
+        <pre className="whitespace-pre">{lineNumbers}</pre>
+      </div>
+
+      {/* Editor */}
+      <div className="flex-1 relative">
+        <textarea
+          ref={textareaRef}
+          value={localContent}
+          onChange={handleChange}
+          onKeyUp={handleCursorMove}
+          onClick={handleCursorMove}
+          readOnly={readOnly}
+          spellCheck={false}
+          className="w-full h-full bg-black text-white font-mono text-sm leading-6 p-4 resize-none outline-none border-none"
+          style={{
+            tabSize: 2,
+            fontFamily: "'JetBrains Mono', 'Fira Code', 'Consolas', monospace",
+          }}
+        />
+      </div>
+
+      {/* Copy button */}
       <button
         onClick={handleCopy}
-        className="absolute top-4 right-4 z-10 p-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+        className="absolute top-4 right-4 z-10 p-2 bg-[#1F1F1F] hover:bg-[#2563EB] rounded-lg transition-all duration-200 shadow-lg"
         title="Copy code"
       >
         {copied ? (
           <Check className="w-4 h-4 text-green-400" />
         ) : (
-          <Copy className="w-4 h-4 text-gray-400" />
+          <Copy className="w-4 h-4 text-[#9CA3AF]" />
         )}
       </button>
-      {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center text-gray-500">
-          Loading editor...
-        </div>
-      )}
-      <div ref={editorRef} className="h-full w-full" />
     </div>
   );
 }

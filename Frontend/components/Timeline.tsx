@@ -26,8 +26,8 @@ const steps = [
   },
   {
     icon: Trophy,
-    title: "Build Winning Pitch",
-    description: "AI-powered presentation ready",
+    title: "Deploy & Present",
+    description: "Production-ready code with deployment guides",
   },
 ];
 

@@ -35,7 +35,7 @@ export default function PricingPage() {
       features: [
         'Advanced idea validation',
         'Role-based AI planning',
-        'Pitch deck optimization',
+        'Advanced code generation',
         'Unlimited prompts',
         'Priority support',
         'Advanced execution analytics',

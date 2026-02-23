@@ -21,8 +21,8 @@ const features = [
   },
   {
     icon: Sparkles,
-    title: "Pitch Generator",
-    description: "AI-powered pitch deck creation that highlights your innovation and impact in minutes, not hours.",
+    title: "AI Code Assistant",
+    description: "Get intelligent code suggestions, explanations, and refactoring recommendations in real-time.",
   },
   {
     icon: Rocket,

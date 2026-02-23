@@ -30,7 +30,6 @@ interface CodeEditorLayoutProps {
   projectId?: string;
   onDownload: () => void;
   onRegenerate: () => void;
-  onPitch: () => void;
   isLoading?: boolean;
 }
 
@@ -39,7 +38,6 @@ export default function CodeEditorLayout({
   projectId,
   onDownload, 
   onRegenerate,
-  onPitch,
   isLoading = false 
 }: CodeEditorLayoutProps) {
   const [activeFile, setActiveFile] = useState<string | null>(null);
@@ -300,7 +298,6 @@ export default function CodeEditorLayout({
         onExplain={handleExplain}
         onRefactor={handleRefactor}
         onChat={() => setChatSidebarOpen(true)}
-        onPitch={onPitch}
         isLoading={isLoading || isRefactoring}
       />
 

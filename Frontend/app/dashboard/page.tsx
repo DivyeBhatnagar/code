@@ -339,7 +339,6 @@ export default function DashboardPage() {
                 setCurrentProject(null);
                 setViewMode('home');
               }}
-              onPitch={() => {}}
             />
           </motion.div>
         )}

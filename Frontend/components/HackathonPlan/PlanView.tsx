@@ -141,7 +141,6 @@ Create a complete, production-ready project structure with all necessary files, 
         projectId={projectData.projectId}
         onDownload={handleDownload}
         onRegenerate={handleBackToForm}
-        onPitch={() => {}}
       />
     );
   }
