@@ -472,3 +472,92 @@ export async function getDemoMode(projectStructure: any): Promise<DemoModeRespon
 
   return await response.json();
 }
+
+// Judge Intelligence Engine
+export interface JudgeIntelligenceRequest {
+  project_structure: any;
+  problem_statement?: string;
+  solution_description?: string;
+  business_model?: string;
+}
+
+export interface JudgeQuestion {
+  question: string;
+  why_judges_ask: string;
+  basic_answer: string;
+  advanced_answer: string;
+  power_answer: string;
+}
+
+export interface ProjectWeakness {
+  area: string;
+  severity: string;
+  issue: string;
+  improvement: string;
+}
+
+export interface JudgeIntelligenceResponse {
+  questions_by_category: {
+    [key: string]: JudgeQuestion[];
+  };
+  weaknesses: ProjectWeakness[];
+  confidence_score: number;
+  risk_level: string;
+  improvement_areas: string[];
+  strategic_insights: string;
+}
+
+export interface EvaluateAnswerRequest {
+  question: string;
+  user_answer: string;
+  project_context: any;
+}
+
+export interface EvaluateAnswerResponse {
+  score: number;
+  strengths: string[];
+  weaknesses: string[];
+  improved_version: string;
+  judge_reaction: string;
+}
+
+export async function getJudgeIntelligence(request: JudgeIntelligenceRequest): Promise<JudgeIntelligenceResponse> {
+  const token = await getAuthToken();
+  
+  const response = await fetch(`${API_URL}/ai/judge-intelligence`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify(request),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.detail || 'Failed to get judge intelligence');
+  }
+
+  return await response.json();
+}
+
+export async function evaluateAnswer(request: EvaluateAnswerRequest): Promise<EvaluateAnswerResponse> {
+  const token = await getAuthToken();
+  
+  const response = await fetch(`${API_URL}/ai/evaluate-answer`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify(request),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.detail || 'Failed to evaluate answer');
+  }
+
+  return await response.json();
+}
+

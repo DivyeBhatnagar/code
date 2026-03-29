@@ -4,10 +4,12 @@ from app.schemas.ai_schema import (
     AIRequest, AIResponse,
     ProjectBuildRequest, ProjectResponse,
     RegenerateFileRequest, RegenerateFileResponse,
-    DownloadZipRequest
+    DownloadZipRequest,
+    JudgeIntelligenceRequest, JudgeIntelligenceResponse
 )
 from app.services.github_ai_service import generate_ai_response
 from app.services.project_builder_service import build_project_with_ai, regenerate_file_with_ai
+from app.services.judge_intelligence_service import generate_judge_intelligence, evaluate_answer_quality
 from app.services.prompt_templates import (
     hackathon_analyzer_prompt,
     mvp_planner_prompt,
@@ -205,4 +207,74 @@ async def download_project_zip(
         raise HTTPException(
             status_code=500,
             detail=f"ZIP creation failed: {str(e)}"
+        )
+
+@router.post("/judge-intelligence")
+async def get_judge_intelligence(
+    request: JudgeIntelligenceRequest,
+    user=Depends(verify_token)
+):
+    """
+    Generate comprehensive judge intelligence analysis
+    
+    This is NOT a generic Q&A generator. It analyzes the specific project
+    and predicts realistic, sharp questions judges will ask based on
+    evaluation criteria and project weaknesses.
+    
+    Features:
+    - Project-specific questions (not generic)
+    - Categorized by evaluation criteria
+    - Three-tier answers (Basic, Advanced, Power)
+    - Weakness detection with improvements
+    - Confidence scoring
+    - Strategic insights
+    """
+    try:
+        logger.info(f"Judge intelligence request - Project: {request.project_structure.get('project_name')}, User: {user.get('email')}")
+        
+        result = await generate_judge_intelligence(
+            project_structure=request.project_structure,
+            problem_statement=request.problem_statement,
+            solution_description=request.solution_description,
+            business_model=request.business_model
+        )
+        
+        logger.info(f"Judge intelligence generated - Questions: {sum(len(v) for v in result.get('questions_by_category', {}).values())}")
+        
+        return result
+    
+    except Exception as e:
+        logger.error(f"Judge intelligence failed: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Judge intelligence generation failed: {str(e)}"
+        )
+
+@router.post("/evaluate-answer")
+async def evaluate_answer(
+    request: dict,
+    user=Depends(verify_token)
+):
+    """
+    Evaluate user's answer quality for simulation mode
+    Provides feedback and improvement suggestions
+    """
+    try:
+        logger.info(f"Answer evaluation request - User: {user.get('email')}")
+        
+        result = await evaluate_answer_quality(
+            question=request.get('question'),
+            user_answer=request.get('user_answer'),
+            project_context=request.get('project_context', {})
+        )
+        
+        logger.info(f"Answer evaluated - Score: {result.get('score')}")
+        
+        return result
+    
+    except Exception as e:
+        logger.error(f"Answer evaluation failed: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Answer evaluation failed: {str(e)}"
         )

@@ -10,6 +10,7 @@ interface ProjectToolbarProps {
   onExplain: () => void;
   onRefactor: () => void;
   onChat: () => void;
+  onJudgeIntelligence?: () => void;
   isLoading?: boolean;
   showPreview?: boolean;
   onTogglePreview?: () => void;
@@ -23,6 +24,7 @@ export default function ProjectToolbar({
   onExplain,
   onRefactor,
   onChat,
+  onJudgeIntelligence,
   isLoading = false,
   showPreview = true,
   onTogglePreview
@@ -85,6 +87,18 @@ export default function ProjectToolbar({
           <MessageSquare className="w-4 h-4" />
           Chat
         </button>
+
+        {onJudgeIntelligence && (
+          <button
+            onClick={onJudgeIntelligence}
+            disabled={isLoading}
+            className="px-3 py-2 bg-gradient-to-r from-[#2563EB] to-[#7C3AED] text-white rounded-lg hover:opacity-90 transition-all duration-200 flex items-center gap-2 disabled:opacity-50 shadow-[0_0_15px_rgba(37,99,235,0.4)]"
+            title="Judge Intelligence Engine"
+          >
+            <Brain className="w-4 h-4" />
+            Judge Intel
+          </button>
+        )}
 
         <div className="w-px h-6 bg-[#1F1F1F]" />
 
